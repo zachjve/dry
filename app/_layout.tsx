@@ -9,10 +9,13 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useSobrietyStore } from '@/hooks/useSobrietyStore';
+import { Onboarding } from '@/components/onboarding/Onboarding';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ModalParams = {
   type: "calendar";
@@ -24,25 +27,62 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const backgroundColor = useThemeColor({}, "modalBackground");
   const textColor = useThemeColor({}, "modalText");
+  const tintColor = useThemeColor({}, "tint");
+  const { profile } = useSobrietyStore();
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
+    // Temporaire pour dev : décommentez pour réinitialiser
+    AsyncStorage.clear();
+
     if (loaded) {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
 
-  if (!loaded) {
+  useEffect(() => {
+    const checkFirstLaunch = async () => {
+      try {
+        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+        if (hasLaunched) {
+          setShowOnboarding(false);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error(error);
+        setShowOnboarding(false);
+        setIsLoading(false);
+      }
+    };
+
+    checkFirstLaunch();
+  }, []);
+
+  if (!loaded || isLoading) {
     return null;
+  }
+
+  if (showOnboarding) {
+    return (
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Onboarding onComplete={async () => {
+          await AsyncStorage.setItem('hasLaunched', 'true');
+          setShowOnboarding(false);
+        }} />
+        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      </ThemeProvider>
+    );
   }
 
   const getModalTitle = (type: string | undefined) => {
     switch (type) {
       case "calendar":
-        return "Historique";
+        return "Calendrier";
       default:
         return "";
     }
@@ -51,7 +91,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="modal"
           options={({ route }) => ({
@@ -60,18 +103,24 @@ export default function RootLayout() {
             headerStyle: {
               backgroundColor: backgroundColor,
             },
-            headerTintColor: textColor,
+            headerTintColor: tintColor,
             headerTitleStyle: {
-              fontWeight: "600",
+              fontWeight: "700",
+              fontSize: 18,
             },
             contentStyle: {
               backgroundColor: backgroundColor,
             },
-            title: getModalTitle((route.params as ModalParams)?.type),
+            headerShadowVisible: false,
             headerBackTitle: "Retour",
+            title: getModalTitle((route.params as ModalParams)?.type),
+            headerLeft: () => null,
           })}
         />
-        <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="+not-found"
+          options={{ headerShown: false }}
+        />
       </Stack>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>

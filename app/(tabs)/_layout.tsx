@@ -1,67 +1,108 @@
 // Path : app/(tabs)/_layout.tsx
 
+import React from "react";
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
-import { HapticTab } from "@/components/HapticTab";
+import { Platform, useColorScheme, StyleSheet } from "react-native";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme() || "light";
+  const headerBackground = useThemeColor({}, "cardBackground");
+  const headerTint = useThemeColor({}, "text");
+  const colors = Colors[colorScheme];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: "absolute",
-          },
-          default: {},
-        }),
+        headerStyle: {
+          backgroundColor: headerBackground,
+        },
+        headerTintColor: headerTint,
+        headerTitleStyle: {
+          fontWeight: "700",
+          fontSize: 20,
+        },
+        headerShadowVisible: false,
+        headerTitleAlign: "left",
+        headerLeftContainerStyle: {
+          paddingLeft: 16,
+        },
+        headerRightContainerStyle: {
+          paddingRight: 16,
+        },
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarStyle: {
+          ...styles.tabBar,
+          backgroundColor: colors.cardBackground,
+          borderTopColor: `${colors.divider}66`,
+          ...(Platform.OS === 'ios' ? styles.tabBarIOS : {}),
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+          marginBottom: Platform.OS === 'ios' ? 0 : 4,
+        },
+        tabBarIconStyle: {
+          marginTop: Platform.OS === 'ios' ? 4 : 0,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Aujourd'hui",
+          title: "Dashboard",
+          headerShown: false,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={color} />
+            <IconSymbol size={24} name="calendar" color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
-          title: "Progrès",
+          title: "Progression",
+          headerTitle: "Progression",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
+            <IconSymbol size={24} name="chart.bar.fill" color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="share"
+        name="profile"
         options={{
-          title: "Partager",
+          title: "Profil",
+          headerTitle: "Profil",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="square.and.arrow.up" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Réglages",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="gear" color={color} />
+            <IconSymbol size={24} name="person" color={color} />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height: Platform.OS === 'ios' ? 88 : 64,
+    paddingTop: 8, 
+    paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+    borderTopWidth: 0.5,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  tabBarIOS: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+ });

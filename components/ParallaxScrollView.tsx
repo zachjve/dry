@@ -8,12 +8,14 @@ import Animated, {
   useAnimatedStyle,
   useScrollViewOffset,
 } from "react-native-reanimated";
+import { LinearGradient } from 'expo-linear-gradient';
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
 import { ThemedView } from "@/components/ThemedView";
 import { useBottomTabOverflow } from "@/components/ui/TabBarBackground";
-import { useColorScheme } from "@/hooks/useColorScheme";
 
-const HEADER_HEIGHT = 250;
+const HEADER_HEIGHT = 275;
 
 type Props = PropsWithChildren<{
   headerImage: ReactElement;
@@ -68,6 +70,14 @@ export default function ParallaxScrollView({
     };
   });
 
+  // Offset pour le contenu
+  const offsetFromBottom = HEADER_HEIGHT * 0.15;
+
+  // Couleurs du dégradé selon le thème
+  const gradientColors = colorScheme === 'light' 
+    ? [Colors.light.tint, Colors.light.achievementActive] 
+    : [Colors.dark.tint, Colors.dark.achievementActive];
+
   return (
     <ThemedView style={styles.container}>
       <Animated.ScrollView
@@ -77,13 +87,24 @@ export default function ParallaxScrollView({
         contentContainerStyle={{ paddingBottom: bottom }}
       >
         <Animated.View
-          style={[
-            styles.header,
-            { backgroundColor: headerBackgroundColor[colorScheme] },
-            headerAnimatedStyle,
-          ]}
+          style={[styles.header, headerAnimatedStyle]}
         >
-          {headerImage}
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+
+          <Animated.View
+            style={[
+              styles.headerInner,
+              { paddingBottom: offsetFromBottom },
+            ]}
+          >
+            {headerImage}
+          </Animated.View>
+
           {headerRight && (
             <Animated.View
               style={[styles.headerRight, headerRightAnimatedStyle]}
@@ -92,7 +113,10 @@ export default function ParallaxScrollView({
             </Animated.View>
           )}
         </Animated.View>
-        <ThemedView style={styles.content}>{children}</ThemedView>
+
+        <ThemedView style={styles.content}>
+          {children}
+        </ThemedView>
       </Animated.ScrollView>
     </ThemedView>
   );
@@ -106,6 +130,11 @@ const styles = StyleSheet.create({
     height: HEADER_HEIGHT,
     overflow: "hidden",
   },
+  headerInner: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
   headerRight: {
     position: "absolute",
     right: 16,
@@ -116,6 +145,5 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 32,
     gap: 16,
-    overflow: "hidden",
   },
 });

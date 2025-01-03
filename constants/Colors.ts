@@ -1,48 +1,125 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 // Path : constants/Colors.ts
 
-const amberBase = "#F59E0B"; // Amber-500 de Tailwind
-const amberDark = "#B45309"; // Amber-700 de Tailwind
+// Couleurs principales
+const indigo = {
+  50: "#EEF2FF",
+  100: "#E0E7FF",
+  200: "#C7D2FE",
+  400: "#818CF8",
+  500: "#6366F1",
+  600: "#4F46E5",
+  700: "#4338CA",
+  800: "#3730A3",
+  900: "#312E81"
+};
+
+const violet = {
+  50: "#F5F3FF",
+  100: "#EDE9FE",
+  200: "#DDD6FE",
+  400: "#A78BFA",
+  500: "#8B5CF6",
+  600: "#7C3AED",
+  700: "#6D28D9",
+  800: "#5B21B6",
+  900: "#4C1D95"
+};
+
+const emerald = {
+  400: "#34D399",
+  500: "#10B981",
+  600: "#059669"
+};
+
+const rose = {
+  400: "#FB7185",
+  500: "#F43F5E",
+  600: "#E11D48"
+};
+
+// Ajout d'un dégradé plus prononcé pour le header parallax
+const headerGradient = {
+  light: `linear-gradient(160deg, ${indigo[400]}, ${violet[500]})`,
+  dark: `linear-gradient(160deg, ${indigo[800]}, ${violet[900]})`
+};
 
 export const Colors = {
   light: {
-    text: "#292524", // Warm-gray-800
-    background: "#FFFBEB", // Amber-50
-    tint: amberDark,
-    icon: "#78716C", // Warm-gray-500
-    tabIconDefault: "#78716C", // Warm-gray-500
-    tabIconSelected: amberDark,
-    modalBackground: "#FEF3C7", // Amber-100
-    headerBackground: "#FEF3C7", // Amber-100
-    modalText: "#292524", // Warm-gray-800
-    achievementActive: amberBase,
-    achievementInactive: "#D6D3D1", // Warm-gray-300
-    success: "#059669", // Emerald-600
-    calendarText: "#44403C", // Warm-gray-700
-    calendarDisabled: "#A8A29E", // Warm-gray-400
-    progressBackground: "#FDE68A", // Amber-200
-    progressFill: amberDark,
+    // Couleurs principales avec plus de contraste
+    text: "#1F2937",              // Gray-800
+    background: "#F3F4F6",        // Gray-100 au lieu de blanc
+    tint: indigo[600],           
+    
+    // Navigation et icônes
+    icon: "#4B5563",             // Gray-600 pour plus de contraste
+    tabIconDefault: "#6B7280",   // Gray-500
+    tabIconSelected: indigo[600],
+    
+    // Modals et headers
+    modalBackground: "#FFFFFF",
+    headerBackground: headerGradient.light,
+    modalText: "#1F2937",        // Gray-800
+
+    // États et progression
+    achievementActive: violet[500],
+    achievementInactive: "#D1D5DB", // Gray-300
+    success: emerald[500],
+    error: rose[500],
+    
+    // Calendrier
+    calendarText: "#374151",      // Gray-700
+    calendarDisabled: "#9CA3AF",  // Gray-400
+    calendarToday: indigo[100],
+    calendarSelected: indigo[600],
+    
+    // Progress bars et indicateurs
+    progressBackground: indigo[100],
+    progressFill: indigo[600],
+    
+    // Éléments supplémentaires
+    cardBackground: "#FFFFFF",    // Garde le blanc pour les cartes
+    cardBorder: "#E5E7EB",       // Gray-200
+    divider: "#E5E7EB",          // Gray-200
+    placeholder: "#9CA3AF",      // Gray-400
+    highlight: violet[100],
   },
   dark: {
-    text: "#FAFAF9", // Warm-gray-50
-    background: "#1C1917", // Warm-gray-900
-    tint: amberBase,
-    icon: "#A8A29E", // Warm-gray-400
-    tabIconDefault: "#A8A29E", // Warm-gray-400
-    tabIconSelected: amberBase,
-    modalBackground: "#292524", // Warm-gray-800
-    headerBackground: "#78350F", // Amber-900
-    modalText: "#FAFAF9", // Warm-gray-50
-    achievementActive: amberBase,
-    achievementInactive: "#78716C", // Warm-gray-500
-    success: "#34D399", // Emerald-400
-    calendarText: "#E7E5E4", // Warm-gray-200
-    calendarDisabled: "#57534E", // Warm-gray-600
-    progressBackground: "#44403C", // Warm-gray-700
-    progressFill: amberBase,
+    // Couleurs principales
+    text: "#F9FAFB",             // Gray-50
+    background: "#111827",       // Gray-900
+    tint: indigo[400],
+    
+    // Navigation et icônes
+    icon: "#D1D5DB",            // Gray-300
+    tabIconDefault: "#6B7280",  // Gray-500
+    tabIconSelected: indigo[400],
+    
+    // Modals et headers
+    modalBackground: "#1F2937",  // Gray-800
+    headerBackground: headerGradient.dark,
+    modalText: "#F9FAFB",       // Gray-50
+    
+    // États et progression
+    achievementActive: violet[400],
+    achievementInactive: "#4B5563", // Gray-600
+    success: emerald[400],
+    error: rose[400],
+    
+    // Calendrier
+    calendarText: "#E5E7EB",     // Gray-200
+    calendarDisabled: "#4B5563", // Gray-600
+    calendarToday: indigo[900],
+    calendarSelected: indigo[400],
+    
+    // Progress bars et indicateurs
+    progressBackground: "#374151", // Gray-700
+    progressFill: indigo[400],
+    
+    // Éléments supplémentaires
+    cardBackground: "#1F2937",    // Gray-800
+    cardBorder: "#374151",       // Gray-700
+    divider: "#374151",          // Gray-700
+    placeholder: "#6B7280",      // Gray-500
+    highlight: violet[900],
   },
 };

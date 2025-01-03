@@ -1,91 +1,144 @@
 // Path : components/modals/CalendarContent.tsx
 
+import React from "react";
 import { StyleSheet, View } from "react-native";
-import { Calendar } from "react-native-calendars";
+import { Calendar, DateData } from "react-native-calendars";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useSobrietyStore } from "@/hooks/useSobrietyStore";
 import { format, parseISO } from "date-fns";
-import { useThemeColor } from "@/hooks/useThemeColor";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { ResetDataButton } from "../ResetDataButton";
 
 export function CalendarContent() {
-  const { days, stats } = useSobrietyStore();
-  const textColor = useThemeColor({}, "text");
-  const successColor = useThemeColor({}, "success");
-  const disabledColor = useThemeColor({}, "calendarDisabled");
-  const calendarTextColor = useThemeColor({}, "calendarText");
-  const modalText = useThemeColor({}, "modalText");
+  const { days, stats, toggleDay } = useSobrietyStore();
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
 
-  // Préparer les dates marquées
   const markedDates = days.reduce((acc, day) => {
     const formattedDate = format(parseISO(day.date), "yyyy-MM-dd");
     return {
       ...acc,
       [formattedDate]: {
         marked: true,
-        dotColor: successColor,
+        dotColor: colors.success,
         selected: true,
-        selectedColor: successColor,
+        selectedColor: `${colors.success}22`,
+        selectedTextColor: colors.success,
       },
     };
   }, {});
 
-  // Thème du calendrier selon le mode
   const calendarTheme = {
-    backgroundColor: "transparent",
-    calendarBackground: "transparent",
-    textSectionTitleColor: calendarTextColor,
-    selectedDayBackgroundColor: successColor,
-    selectedDayTextColor: textColor,
-    todayTextColor: successColor,
-    dayTextColor: calendarTextColor,
-    textDisabledColor: disabledColor,
-    dotColor: successColor,
-    selectedDotColor: textColor,
-    arrowColor: modalText,
-    monthTextColor: modalText,
-    textMonthFontWeight: "bold" as const,
+    backgroundColor: 'transparent',
+    calendarBackground: 'transparent',
+    
+    // Headers
+    textSectionTitleColor: colors.icon,
+    textSectionTitleDisabledColor: colors.calendarDisabled,
+    
+    // Days
+    dayTextColor: colors.text,
+    textDisabledColor: colors.calendarDisabled,
+    todayTextColor: colors.tint,
+    todayBackgroundColor: `${colors.tint}15`,
+    
+    // Selection
+    selectedDayBackgroundColor: `${colors.success}22`,
+    selectedDayTextColor: colors.success,
+    
+    // Dots
+    dotColor: colors.success,
+    selectedDotColor: colors.success,
+    
+    // Navigation
+    arrowColor: colors.tint,
+    monthTextColor: colors.text,
+    
+    // Style
+    textMonthFontWeight: "700",
     textDayFontSize: 16,
-    textMonthFontSize: 18,
+    textMonthFontSize: 20,
+    textDayHeaderFontSize: 14,
+    textDayHeaderFontWeight: "600",
   };
+
+  const onDaySelect = (day: DateData) => {
+    const targetDate = new Date(day.dateString);
+    const today = new Date();
+    
+    // Prevent selecting future dates
+    if (targetDate > today) return;
+
+    toggleDay(day.dateString);
+  };
+
+  const stats_data = [
+    {
+      value: stats.currentStreak,
+      label: "Série actuelle",
+      icon: "local-fire-department",
+      color: colors.tint
+    },
+    {
+      value: stats.bestStreak,
+      label: "Record",
+      icon: "emoji-events",
+      color: colors.achievementActive
+    },
+    {
+      value: stats.totalSoberDays,
+      label: "Total",
+      icon: "calendar-today",
+      color: colors.success
+    }
+  ];
 
   return (
     <ThemedView style={styles.container}>
-      {/* Statistiques */}
-      <ThemedView
-        style={[
-          styles.statsContainer,
-          {
-            borderColor: useThemeColor({}, "calendarDisabled"),
-          },
-        ]}
-      >
-        <View style={styles.statItem}>
-          <ThemedText style={styles.statValue}>
-            {stats.currentStreak}
-          </ThemedText>
-          <ThemedText style={styles.statLabel}>Série actuelle</ThemedText>
-        </View>
-        <View style={styles.statItem}>
-          <ThemedText style={styles.statValue}>{stats.bestStreak}</ThemedText>
-          <ThemedText style={styles.statLabel}>Record</ThemedText>
-        </View>
-        <View style={styles.statItem}>
-          <ThemedText style={styles.statValue}>
-            {stats.totalSoberDays}
-          </ThemedText>
-          <ThemedText style={styles.statLabel}>Total</ThemedText>
-        </View>
-      </ThemedView>
+      {/* Statistics */}
+      <View style={styles.statsRow}>
+        {stats_data.map((stat) => (
+          <View 
+            key={stat.label}
+            style={[
+              styles.statCard,
+              { backgroundColor: `${stat.color}15` }
+            ]}
+          >
+            <MaterialIcons 
+              name={stat.icon as "local-fire-department" | "emoji-events" | "calendar-today"}
+              size={24}
+              color={stat.color}
+              style={styles.statIcon}
+            />
+            <ThemedText style={styles.statValue}>
+              {stat.value}
+            </ThemedText>
+            <ThemedText style={[styles.statLabel, { color: colors.icon }]}>
+              {stat.label}
+            </ThemedText>
+          </View>
+        ))}
+      </View>
 
-      {/* Calendrier */}
-      <Calendar
-        theme={calendarTheme}
-        markedDates={markedDates}
-        enableSwipeMonths
-        hideExtraDays
-        firstDay={1}
-      />
+      {/* Separator */}
+      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
+      {/* Calendar */}
+      <View style={styles.calendarContainer}>
+        <Calendar
+          theme={calendarTheme}
+          markedDates={markedDates}
+          onDayPress={onDaySelect}
+          enableSwipeMonths
+          hideExtraDays
+          firstDay={1}
+          maxDate={format(new Date(), 'yyyy-MM-dd')}
+        />
+      </View>      
     </ThemedView>
   );
 }
@@ -95,24 +148,42 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  statsContainer: {
+  statsRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginBottom: 24,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    gap: 12,
   },
-  statItem: {
+  statCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 16,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statIcon: {
+    marginBottom: 8,
   },
   statValue: {
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: "700",
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
-    opacity: 0.6,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  divider: {
+    height: 1,
+    marginBottom: 24,
+    opacity: 0.5,
+  },
+  calendarContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
 });

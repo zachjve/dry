@@ -1,7 +1,7 @@
 // Path : types/sobriety.ts
 
 export interface SobrietyDay {
-  date: string;
+  date: string;      // "2023-07-01T00:00:00.000Z"
   completed: boolean;
   notes?: string;
 }

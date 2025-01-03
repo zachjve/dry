@@ -3,108 +3,136 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { SobrietyDay, SobrietyGoal, SobrietyStats } from "@/types/sobriety";
-import { differenceInDays, isToday, parseISO } from "date-fns";
+import { differenceInDays, isToday, parseISO, format, subDays, isWithinInterval, startOfDay } from "date-fns";
+
+interface Profile {
+  name: string;
+}
+
+interface SobrietyDay {
+  date: string;
+  completed: boolean;
+}
+
+interface SobrietyStats {
+  currentStreak: number;
+  bestStreak: number;
+  totalSoberDays: number;
+  last30DaysSober: number;
+  last30DaysRatio: number;
+  lastCheckin: string | null;
+}
 
 interface SobrietyState {
+  profile: Profile | null;
   days: SobrietyDay[];
-  goals: SobrietyGoal;
   stats: SobrietyStats;
 }
 
 interface SobrietyActions {
-  addDay: (day: SobrietyDay) => void;
-  updateGoal: (goal: SobrietyGoal) => void;
+  updateProfile: (profile: Profile) => void;
+  toggleDay: (dateString: string) => void;
   calculateStats: () => void;
-  canCheckIn: () => boolean;
+  resetData: () => void;
 }
+
+const initialStats: SobrietyStats = {
+  currentStreak: 0,
+  bestStreak: 0,
+  totalSoberDays: 0,
+  last30DaysSober: 0,
+  last30DaysRatio: 0,
+  lastCheckin: null,
+};
+
+const initialState: SobrietyState = {
+  profile: null,
+  days: [],
+  stats: initialStats,
+};
 
 export const useSobrietyStore = create<SobrietyState & SobrietyActions>()(
   persist(
     (set, get) => ({
-      days: [],
-      goals: {
-        targetDays: 30,
-        startDate: new Date().toISOString(),
-      },
-      stats: {
-        currentStreak: 0,
-        bestStreak: 0,
-        totalSoberDays: 0,
-        lastCheckin: null,
-      },
+      ...initialState,
 
-      addDay: (day) => {
-        const state = get();
-        if (!state.canCheckIn()) return;
+      updateProfile: (profile) => set({ profile }),
 
-        set((state) => ({
-          days: [...state.days, day],
-          stats: {
-            ...state.stats,
-            lastCheckin: day.date,
-          },
-        }));
+      toggleDay: (dateString) => {
+        const targetDate = format(new Date(dateString), "yyyy-MM-dd");
+
+        set((state) => {
+          const existing = state.days.find(
+            (d) => format(new Date(d.date), "yyyy-MM-dd") === targetDate
+          );
+          
+          return {
+            days: existing 
+              ? state.days.filter(d => format(new Date(d.date), "yyyy-MM-dd") !== targetDate)
+              : [...state.days, { date: dateString, completed: true }]
+          };
+        });
+
         get().calculateStats();
       },
 
-      updateGoal: (goal) => set({ goals: goal }),
-
       calculateStats: () => {
         const { days } = get();
-        const sortedDays = [...days].sort(
-          (a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime()
-        );
+        const today = startOfDay(new Date());
+        const thirtyDaysAgo = startOfDay(subDays(today, 30));
 
+        // Trier les jours
+        const sortedDays = [...days]
+          .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+
+        // Calculer les streaks
         let currentStreak = 0;
         let bestStreak = 0;
-        let streak = 0;
+        let tempStreak = 0;
 
         sortedDays.forEach((day, index) => {
+          const currentDate = parseISO(day.date);
+
           if (index === 0) {
-            streak = 1;
+            tempStreak = 1;
           } else {
             const prevDate = parseISO(sortedDays[index - 1].date);
-            const currentDate = parseISO(day.date);
             const diff = differenceInDays(currentDate, prevDate);
-
-            if (diff === 1) {
-              streak++;
-            } else {
-              streak = 1;
-            }
+            tempStreak = diff === 1 ? tempStreak + 1 : 1;
           }
 
-          bestStreak = Math.max(bestStreak, streak);
-          if (index === sortedDays.length - 1) {
-            const lastDate = parseISO(day.date);
-            if (
-              isToday(lastDate) ||
-              differenceInDays(new Date(), lastDate) === 1
-            ) {
-              currentStreak = streak;
-            } else {
-              currentStreak = 0;
-            }
-          }
+          bestStreak = Math.max(bestStreak, tempStreak);
         });
+
+        // Calculer la streak actuelle
+        const lastDay = sortedDays[sortedDays.length - 1];
+        if (lastDay) {
+          const lastDate = parseISO(lastDay.date);
+          currentStreak = tempStreak;
+        }
+
+        // Calculer les stats sur 30 jours
+        const last30DaysSober = sortedDays.filter(day => {
+          const date = parseISO(day.date);
+          return isWithinInterval(date, { start: thirtyDaysAgo, end: today });
+        }).length;
 
         set((state) => ({
           stats: {
             ...state.stats,
             currentStreak,
             bestStreak,
-            totalSoberDays: days.length,
+            totalSoberDays: sortedDays.length,
+            last30DaysSober,
+            last30DaysRatio: Math.round((last30DaysSober / 30) * 100),
+            lastCheckin: lastDay?.date ?? null,
           },
         }));
       },
 
-      canCheckIn: () => {
-        const { stats } = get();
-        if (!stats.lastCheckin) return true;
-
-        const lastCheck = parseISO(stats.lastCheckin);
-        return !isToday(lastCheck);
+      resetData: () => {
+        const profile = get().profile;
+        set({ ...initialState, profile });
       },
     }),
     {

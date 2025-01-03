@@ -1,48 +1,63 @@
-// Path : app/(tabs)/index.tsx
-
+// app/(tabs)/index.tsx
 import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { SobrietyStreak } from "@/components/index/SobrietyStreak";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { DailyCheck } from "@/components/index/DailyCheck";
-import { Achievements } from "@/components/index/Achievements";
-import { useSobrietyStore } from "@/hooks/useSobrietyStore";
+import { HeaderStreak } from "@/components/HeaderStreak";
+import { DailyCheck } from "@/components/DailyCheck";
+import { CircularProgressObjectives } from "@/components/CircularProgressObjectives";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { useSobrietyStore } from "@/hooks/useSobrietyStore";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemedView } from "@/components/ThemedView";
+import { Colors } from "@/constants/Colors";
+
+const MILESTONES = [3, 7, 15, 30, 45, 60, 90];
 
 export default function HomeScreen() {
-  const { stats } = useSobrietyStore();
   const router = useRouter();
-  const headerBackgroundColor = useThemeColor({}, "headerBackground");
-  const textColor = useThemeColor({}, "modalText");
+  const { stats } = useSobrietyStore();
+  const textColor = useThemeColor({}, "text");
+  const colorScheme = useColorScheme() ?? 'light';
 
   const openCalendar = () => {
-    router.push({
-      pathname: "/modal",
-      params: { type: "calendar" },
-    });
+    router.push("/modal");
   };
 
   return (
     <ParallaxScrollView
       headerBackgroundColor={{
-        light: headerBackgroundColor,
-        dark: headerBackgroundColor,
+        light: Colors.light.headerBackground,
+        dark: Colors.dark.headerBackground,
       }}
-      headerImage={<SobrietyStreak streak={stats.currentStreak} />}
+      headerImage={<HeaderStreak />}
       headerRight={
-        <TouchableOpacity onPress={openCalendar} style={styles.calendarButton}>
-          <IconSymbol name="calendar" size={24} color={textColor} />
+        <TouchableOpacity
+          onPress={openCalendar}
+          style={[
+            styles.calendarButton,
+            {
+              backgroundColor: colorScheme === 'dark' 
+                ? 'rgba(0, 0, 0, 0.4)' 
+                : 'rgba(255, 255, 255, 0.6)'
+            }
+          ]}
+        >
+          <IconSymbol
+            name="calendar"
+            size={24}
+            color={textColor}
+          />
         </TouchableOpacity>
       }
     >
       <ThemedView style={styles.container}>
-        <ThemedText type="title">Aujourd'hui</ThemedText>
         <DailyCheck />
-        <Achievements />
+        <CircularProgressObjectives
+          milestones={MILESTONES}
+          currentStreak={stats.currentStreak}
+        />
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -51,8 +66,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     gap: 24,
+    paddingHorizontal: 16,
   },
   calendarButton: {
-    padding: 8,
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 16,
   },
 });

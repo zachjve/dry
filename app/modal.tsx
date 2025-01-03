@@ -1,25 +1,24 @@
 // Path : app/modal.tsx
 
+import React from "react";
 import { StyleSheet } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { ThemedView } from "@/components/ThemedView";
 import { CalendarContent } from "@/components/modals/CalendarContent";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
-export type ModalType = "calendar";
+export default function CalendarModalScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
 
-export default function ModalScreen() {
-  const { type } = useLocalSearchParams<{ type: ModalType }>();
-
-  const renderContent = () => {
-    switch (type) {
-      case "calendar":
-        return <CalendarContent />;
-      default:
-        return null;
-    }
-  };
-
-  return <ThemedView style={styles.container}>{renderContent()}</ThemedView>;
+  return (
+    <ThemedView style={[
+      styles.container,
+      { backgroundColor: colors.modalBackground }
+    ]}>
+      <CalendarContent />
+    </ThemedView>
+  );
 }
 
 const styles = StyleSheet.create({
